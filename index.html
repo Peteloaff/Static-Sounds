@@ -6,212 +6,286 @@
 <title>Static Sounds</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root, [data-theme="dark"]{
-    --bg:#0A0A0B; --panel:#141416; --panel-2:#1C1C1F; --line:#28282B;
-    --red:#E8342A; --red-soft:#3A1613; --text:#F5F4F2; --muted:#8C8C90; --danger:#FF6B5E;
-    --shadow: 0 20px 50px rgba(0,0,0,.5);
+    --metal-1:#3a3a3e; --metal-2:#151517; --metal-3:#242427;
+    --bezel-lt:rgba(255,255,255,.20); --bezel-dk:rgba(0,0,0,.75);
+    --body-bg:#0c0c0d; --body-bg-2:#131315; --line:#000;
+    --caption:#E9E7E2; --caption-muted:#8f8d8a;
+    --lcd-bg:#0a0705; --red:#FF2B22; --red-dim:#7A140F; --red-glow:0 0 6px rgba(255,43,34,.65);
+    --danger:#FF6B5E;
+    --page-bg:#050506;
   }
   [data-theme="light"]{
-    --bg:#F7F6F4; --panel:#FFFFFF; --panel-2:#F0EEEB; --line:#E4E1DC;
-    --red:#D6241A; --red-soft:#FBDAD7; --text:#121212; --muted:#6B6870; --danger:#C21A0E;
-    --shadow: 0 20px 50px rgba(0,0,0,.08);
+    --metal-1:#EDEBE6; --metal-2:#B7B3AC; --metal-3:#D8D5CE;
+    --bezel-lt:rgba(255,255,255,.65); --bezel-dk:rgba(0,0,0,.35);
+    --body-bg:#DEDBD4; --body-bg-2:#E9E7E1; --line:#8f8b83;
+    --caption:#26241F; --caption-muted:#5b584f;
+    --lcd-bg:#0a0705; --red:#D6241A; --red-dim:#F4C9C6; --red-glow:0 0 6px rgba(214,36,26,.5);
+    --danger:#C21A0E;
+    --page-bg:#9c988f;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    background:
-      radial-gradient(900px 500px at 100% -10%, color-mix(in srgb, var(--red) 10%, transparent), transparent 60%),
-      var(--bg);
-    color:var(--text); font-family:'Inter',sans-serif; min-height:100vh; padding:26px 16px 60px;
-    transition: background .3s ease, color .3s ease;
+    background: var(--page-bg);
+    background-image: repeating-linear-gradient(rgba(255,255,255,.02) 0 1px, transparent 1px 3px);
+    color:var(--caption); font-family:'Inter',sans-serif; min-height:100vh;
+    padding:22px 12px 60px; -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:640px;margin:0 auto;}
+  .wrap{max-width:420px;margin:0 auto;}
 
-  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px;}
-  .brand{display:flex;align-items:center;gap:12px;}
-  .logo-mark{display:flex;align-items:flex-end;gap:3px;height:30px;}
-  .logo-mark span{width:5px;background:var(--red);border-radius:2px;}
-  .logo-mark span:nth-child(1){height:40%;}
-  .logo-mark span:nth-child(2){height:70%;}
-  .logo-mark span:nth-child(3){height:100%;}
-  .logo-mark span:nth-child(4){height:55%;}
+  .win{
+    background:linear-gradient(180deg, var(--metal-1), var(--metal-2));
+    border:1px solid var(--line); border-radius:6px;
+    box-shadow: inset 0 1px 0 var(--bezel-lt), inset 0 -2px 0 var(--bezel-dk), 0 14px 34px rgba(0,0,0,.5);
+    margin-bottom:12px; overflow:hidden;
+  }
+  .win-title{
+    display:flex;align-items:center;justify-content:space-between;padding:6px 8px;
+    background:repeating-linear-gradient(-45deg, var(--metal-3) 0 2px, var(--metal-2) 2px 4px);
+    border-bottom:1px solid var(--line);
+  }
+  .win-title .cap{font-family:'Inter',sans-serif;font-weight:700;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--caption);}
+  .win-btns{display:flex;gap:4px;}
+  .chip-btn{
+    width:16px;height:14px;background:linear-gradient(180deg, var(--metal-1), var(--metal-2));
+    border:1px solid var(--line);
+    box-shadow: inset 1px 1px 0 var(--bezel-lt), inset -1px -1px 0 var(--bezel-dk);
+    color:var(--caption); font-size:9px; line-height:1;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:'JetBrains Mono',monospace;
+  }
+  .chip-btn:active{box-shadow: inset -1px -1px 0 var(--bezel-lt), inset 1px 1px 0 var(--bezel-dk);}
+  .win-body{padding:12px;background:linear-gradient(180deg, var(--body-bg-2), var(--body-bg));}
+  .win.shaded .win-body{display:none;}
+
+  .brandbar{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 14px;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .logo-mark{display:flex;align-items:flex-end;gap:2px;height:22px;}
+  .logo-mark span{width:4px;background:var(--red);box-shadow:var(--red-glow);}
+  .logo-mark span:nth-child(1){height:40%;} .logo-mark span:nth-child(2){height:70%;}
+  .logo-mark span:nth-child(3){height:100%;} .logo-mark span:nth-child(4){height:55%;}
   .logo-mark span:nth-child(5){height:85%;}
-  .wordmark{font-family:'Unbounded',sans-serif;font-weight:700;font-size:19px;letter-spacing:-0.01em;line-height:1;}
-  .wordmark b{color:var(--red);font-weight:900;}
-  .tagline{color:var(--muted);font-size:13px;margin:6px 0 22px;font-family:'JetBrains Mono',monospace;letter-spacing:.02em;}
+  .wordmark{font-family:'VT323',monospace;font-size:26px;letter-spacing:.03em;line-height:1;color:var(--caption);}
+  .wordmark b{color:var(--red);text-shadow:var(--red-glow);font-weight:400;}
+  .theme-toggle{display:flex;gap:3px;}
+  .theme-toggle .chip-btn{width:24px;height:20px;}
+  .theme-toggle .chip-btn.active{background:linear-gradient(180deg, var(--red), var(--red-dim));color:#fff;}
+  .theme-toggle svg{width:11px;height:11px;}
 
-  .theme-toggle{display:flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:20px;padding:5px;cursor:pointer;}
-  .theme-toggle button{background:none;border:none;color:var(--muted);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-  .theme-toggle button.active{background:var(--red);color:#fff;}
-  .theme-toggle svg{width:14px;height:14px;}
+  .configWarn{background:var(--red-dim);border:1px solid var(--red);color:var(--caption);font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.6;border-radius:4px;padding:10px 12px;margin-bottom:12px;}
 
-  .configWarn{background:var(--red-soft);border:1px solid var(--red);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.6;border-radius:8px;padding:10px 12px;margin-bottom:16px;}
+  label{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--caption-muted);margin:0 0 5px;}
+  input[type=text]{
+    width:100%;background:var(--lcd-bg);border:1px solid var(--line);
+    box-shadow: inset 1px 1px 3px rgba(0,0,0,.8);
+    border-radius:3px;color:var(--red);text-shadow:var(--red-glow);
+    font-family:'JetBrains Mono',monospace;font-size:12px;padding:9px 10px;margin-bottom:9px;outline:none;
+  }
+  input[type=text]::placeholder{color:var(--red-dim);}
 
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow);}
-  .panel-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;display:flex;justify-content:space-between;align-items:center;}
-  .panel-title button{background:none;border:none;color:var(--red);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;cursor:pointer;padding:0;}
+  .help{font-size:11px;color:var(--caption-muted);line-height:1.6;background:rgba(0,0,0,.15);border:1px dashed var(--line);border-radius:4px;padding:10px 12px;margin-bottom:12px;}
 
-  label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px;}
-  input[type=text]{width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:11px 12px;margin-bottom:10px;outline:none;}
-  input[type=text]:focus{border-color:var(--red);}
-
-  .help{font-size:12px;color:var(--muted);line-height:1.6;background:var(--panel-2);border:1px dashed var(--line);border-radius:8px;padding:12px 14px;margin-bottom:14px;}
-  .help ol{margin:6px 0 0;padding-left:18px;}
-  .help a{color:var(--red);}
-
-  button.primary{background:var(--red);color:#fff;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;padding:11px 18px;cursor:pointer;width:100%;}
+  button.primary{
+    background:linear-gradient(180deg, var(--red), var(--red-dim));
+    color:#fff;border:1px solid #000;border-radius:3px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.35);
+    font-family:'Inter',sans-serif;font-weight:700;font-size:11px;letter-spacing:.04em;text-transform:uppercase;
+    padding:9px 14px;cursor:pointer;width:100%;
+  }
+  button.primary:active{box-shadow: inset 0 2px 3px rgba(0,0,0,.5);}
   button.primary:disabled{opacity:.5;cursor:default;}
-  button.primary:hover:not(:disabled){filter:brightness(1.1);}
-  button.ghost{background:none;border:1px solid var(--line);color:var(--text);border-radius:8px;font-size:12px;padding:8px 12px;cursor:pointer;}
-  button.ghost:hover{border-color:var(--red);color:var(--red);}
+  button.ghost{
+    background:linear-gradient(180deg, var(--metal-1), var(--metal-2));
+    border:1px solid var(--line); color:var(--caption);
+    box-shadow: inset 1px 1px 0 var(--bezel-lt), inset -1px -1px 0 var(--bezel-dk);
+    border-radius:3px;font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:7px 11px;cursor:pointer;
+    font-family:'Inter',sans-serif;font-weight:600;
+  }
+  button.ghost:active{box-shadow: inset -1px -1px 0 var(--bezel-lt), inset 1px 1px 0 var(--bezel-dk);}
 
-  .status{font-size:12px;margin-top:8px;font-family:'JetBrains Mono',monospace;}
+  .status{font-size:11px;margin-top:6px;font-family:'JetBrains Mono',monospace;}
   .status.err{color:var(--danger);}
   .status.ok{color:var(--red);}
+  .install-tip{font-size:10px;color:var(--caption-muted);text-align:center;margin-top:10px;font-family:'JetBrains Mono',monospace;line-height:1.6;}
 
-  .deck{display:flex;gap:20px;align-items:center;margin-bottom:6px;}
-  .reels{width:80px;height:80px;flex:none;position:relative;}
-  .reel{width:100%;height:100%;border-radius:50%;background:repeating-conic-gradient(var(--line) 0deg 8deg, var(--panel-2) 8deg 20deg);border:2px solid var(--line);animation:spin 3.5s linear infinite;animation-play-state:paused;}
+  .lcd{
+    background:var(--lcd-bg);border:1px solid #000;
+    box-shadow: inset 1px 1px 4px rgba(0,0,0,.9);border-radius:3px;padding:10px 12px;
+    background-image: repeating-linear-gradient(rgba(255,255,255,.025) 0 1px, transparent 1px 3px);
+  }
+  .deck{display:flex;gap:14px;align-items:center;}
+  .reels{width:52px;height:52px;flex:none;position:relative;}
+  .reel{width:100%;height:100%;border-radius:50%;background:repeating-conic-gradient(#1a1a1a 0deg 8deg, #050505 8deg 20deg);border:1px solid #000;animation:spin 3.2s linear infinite;animation-play-state:paused;}
   .reel.spinning{animation-play-state:running;}
-  .reel::after{content:'';position:absolute;inset:0;margin:auto;width:14px;height:14px;border-radius:50%;background:var(--red);}
+  .reel::after{content:'';position:absolute;inset:0;margin:auto;width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:var(--red-glow);}
   @keyframes spin{to{transform:rotate(360deg);}}
   .now-playing{min-width:0;flex:1;}
-  .np-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--red);margin:0 0 4px;}
-  .np-title{font-family:'Unbounded',sans-serif;font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 12px;}
-  .progress-row{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
-  .progress-track{flex:1;height:4px;background:var(--line);border-radius:2px;position:relative;cursor:pointer;}
-  .progress-fill{position:absolute;left:0;top:0;bottom:0;background:var(--red);border-radius:2px;width:0%;}
-  .controls{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:18px;}
-  .ctrl-btn{background:var(--panel-2);border:1px solid var(--line);color:var(--text);width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-  .ctrl-btn:hover{border-color:var(--red);}
-  .ctrl-btn.play{width:56px;height:56px;background:var(--red);color:#fff;border:none;}
-  .ctrl-btn.shuffle.on{color:var(--red);border-color:var(--red);}
-  .ctrl-btn svg{width:18px;height:18px;}
-  .ctrl-btn.play svg{width:22px;height:22px;}
+  .np-title{font-family:'VT323',monospace;font-size:22px;line-height:1;color:var(--red);text-shadow:var(--red-glow);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 8px;}
+  .progress-row{display:flex;align-items:center;gap:8px;font-family:'VT323',monospace;font-size:16px;color:var(--red);text-shadow:var(--red-glow);}
+  .progress-track{flex:1;height:6px;background:#1a1310;border:1px solid #000;box-shadow:inset 1px 1px 2px rgba(0,0,0,.8);border-radius:2px;position:relative;cursor:pointer;}
+  .progress-fill{position:absolute;left:0;top:0;bottom:0;background:var(--red);box-shadow:var(--red-glow);border-radius:2px;width:0%;}
 
-  .eq-toggle-row{display:flex;justify-content:flex-end;margin:2px 0 4px;}
-  .eq-panel{display:none;border-top:1px solid var(--line);margin-top:16px;padding-top:16px;}
+  .vis-head{display:flex;align-items:center;justify-content:space-between;margin-top:10px;margin-bottom:6px;}
+  .vis-head .cap-sm{font-family:'Inter',sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--caption-muted);}
+  .vis-tabs{display:flex;gap:3px;}
+  .vis-tab{
+    background:linear-gradient(180deg, var(--metal-1), var(--metal-2));
+    border:1px solid var(--line);color:var(--caption-muted);
+    box-shadow: inset 1px 1px 0 var(--bezel-lt), inset -1px -1px 0 var(--bezel-dk);
+    font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.05em;
+    padding:3px 7px;border-radius:2px;cursor:pointer;
+  }
+  .vis-tab.active{background:linear-gradient(180deg, var(--red), var(--red-dim));color:#fff;border-color:#000;}
+  .vis-canvas{width:100%;height:72px;display:block;background:var(--lcd-bg);border:1px solid #000;box-shadow:inset 1px 1px 4px rgba(0,0,0,.9);border-radius:3px;}
+
+  .controls{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;}
+  .ctrl-btn{
+    background:linear-gradient(180deg, var(--metal-1), var(--metal-2));
+    border:1px solid var(--line); color:var(--caption);
+    box-shadow: inset 1px 1px 0 var(--bezel-lt), inset -1px -1px 0 var(--bezel-dk);
+    width:34px;height:30px;border-radius:3px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .ctrl-btn:active{box-shadow: inset -1px -1px 0 var(--bezel-lt), inset 1px 1px 0 var(--bezel-dk);}
+  .ctrl-btn.play{width:44px;background:linear-gradient(180deg, var(--red), var(--red-dim));color:#fff;border-color:#000;}
+  .ctrl-btn.shuffle.on{color:var(--red);box-shadow: inset 0 0 0 1px var(--red), inset 1px 1px 0 var(--bezel-lt);}
+  .ctrl-btn svg{width:14px;height:14px;}
+  .ctrl-btn.play svg{width:17px;height:17px;}
+
+  .eq-toggle-row{display:flex;justify-content:flex-end;margin:10px 0 0;}
+  .eq-panel{display:none;border-top:1px solid var(--line);margin-top:10px;padding-top:12px;}
   .eq-panel.show{display:block;}
-  .eq-bands{display:flex;justify-content:space-between;gap:6px;}
+  .eq-bands{display:flex;justify-content:space-between;gap:5px;}
   .eq-band{display:flex;flex-direction:column;align-items:center;flex:1;}
-  .eq-val{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--red);margin-bottom:6px;height:12px;}
-  .eq-slider-wrap{height:110px;display:flex;align-items:center;justify-content:center;width:100%;}
-  .eq-band input[type=range]{width:100px; transform:rotate(-90deg); accent-color:var(--red); cursor:pointer;}
-  .eq-freq{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:6px;}
-  .eq-foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
-  .eq-foot span{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+  .eq-val{font-family:'VT323',monospace;font-size:13px;color:var(--red);text-shadow:var(--red-glow);margin-bottom:4px;height:14px;}
+  .eq-slider-wrap{height:96px;display:flex;align-items:center;justify-content:center;width:100%;}
+  .eq-band input[type=range]{width:88px; transform:rotate(-90deg); accent-color:var(--red); cursor:pointer;}
+  .eq-freq{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--caption-muted);margin-top:5px;}
+  .eq-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+  .eq-foot span{font-size:10px;color:var(--caption-muted);font-family:'JetBrains Mono',monospace;}
 
-  .folder-group{margin-bottom:16px;}
-  .folder-head{display:flex;align-items:center;justify-content:space-between;padding:4px 0;margin-bottom:4px;}
-  .folder-head .fname{font-family:'Unbounded',sans-serif;font-weight:700;font-size:12px;color:var(--text);}
-  .folder-head .fcount{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
-  .folder-head .remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;}
-  .track{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;cursor:pointer;font-size:13px;}
-  .track:hover{background:var(--panel-2);}
-  .track.active{background:var(--red-soft);}
+  .folder-group{margin-bottom:12px;}
+  .folder-head{display:flex;align-items:center;justify-content:space-between;padding:3px 2px;margin-bottom:2px;border-bottom:1px solid var(--line);}
+  .folder-head .fname{font-family:'Inter',sans-serif;font-weight:700;font-size:11px;color:var(--caption);text-transform:uppercase;letter-spacing:.03em;}
+  .folder-head .fcount{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--caption-muted);}
+  .folder-head .remove{background:none;border:none;color:var(--caption-muted);cursor:pointer;font-size:10px;}
+  .track{display:flex;align-items:center;gap:8px;padding:6px 4px;border-radius:2px;cursor:pointer;font-size:12px;}
+  .track:hover{background:rgba(255,255,255,.04);}
+  .track.active{background:var(--red-dim);}
   .track input[type=checkbox]{accent-color:var(--red);flex:none;}
-  .track-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .track-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'JetBrains Mono',monospace;}
   .track.active .track-name{color:var(--red);}
-  .track-eq{width:14px;flex:none;display:none;}
+  .track-eq{width:12px;flex:none;display:none;}
   .track.active .track-eq{display:block;}
-  .eq-bar{display:inline-block;width:2px;background:var(--red);margin-right:2px;height:6px;vertical-align:middle;}
+  .eq-bar{display:inline-block;width:2px;background:var(--red);margin-right:2px;height:5px;vertical-align:middle;}
   .track.playing .eq-bar{animation:eqbar 0.8s ease-in-out infinite alternate;}
   .eq-bar:nth-child(2){animation-delay:.15s;}
   .eq-bar:nth-child(3){animation-delay:.3s;}
-  @keyframes eqbar{from{height:3px;}to{height:11px;}}
+  @keyframes eqbar{from{height:2px;}to{height:9px;}}
 
-  .selection-bar{position:sticky;bottom:0;background:var(--panel-2);border:1px solid var(--red);border-radius:10px;padding:12px;display:none;gap:8px;align-items:center;margin-top:8px;}
+  .selection-bar{position:sticky;bottom:0;background:var(--metal-2);border:1px solid var(--red);border-radius:3px;padding:10px;display:none;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap;}
   .selection-bar.show{display:flex;}
-  .selection-bar span{font-size:12px;color:var(--muted);flex:1;}
-  .selection-bar input{margin:0;flex:1;}
+  .selection-bar span{font-size:11px;color:var(--caption-muted);flex:1 1 100%;font-family:'JetBrains Mono',monospace;}
+  .selection-bar input{margin:0;flex:1;min-width:100px;}
   .selection-bar button{flex:none;}
 
-  .playlist-row{display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:8px;cursor:pointer;}
-  .playlist-row:hover{background:var(--panel-2);}
-  .playlist-row .pname{flex:1;font-size:13px;font-weight:500;}
-  .playlist-row .pcount{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
-  .playlist-row .pdel{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px;}
+  .playlist-row{display:flex;align-items:center;gap:8px;padding:8px 6px;border-radius:2px;cursor:pointer;border-bottom:1px solid var(--line);}
+  .playlist-row:hover{background:rgba(255,255,255,.04);}
+  .playlist-row .pname{flex:1;font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+  .playlist-row .pcount{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--caption-muted);}
+  .playlist-row .pdel{background:none;border:none;color:var(--caption-muted);cursor:pointer;font-size:13px;padding:2px 5px;}
   .playlist-row .pdel:hover{color:var(--danger);}
 
-  .empty{text-align:center;color:var(--muted);font-size:13px;padding:20px 10px;}
-  .install-tip{font-size:11px;color:var(--muted);text-align:center;margin-top:10px;font-family:'JetBrains Mono',monospace;line-height:1.6;}
-  footer{text-align:center;color:var(--muted);font-size:11px;margin-top:24px;font-family:'JetBrains Mono',monospace;}
+  .empty{text-align:center;color:var(--caption-muted);font-size:12px;padding:16px 8px;font-family:'JetBrains Mono',monospace;}
+  footer{text-align:center;color:var(--caption-muted);font-size:10px;margin-top:18px;font-family:'JetBrains Mono',monospace;opacity:.7;}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <div class="topbar">
+  <div class="brandbar">
     <div class="brand">
       <div class="logo-mark"><span></span><span></span><span></span><span></span><span></span></div>
       <div class="wordmark">STATIC <b>SOUNDS</b></div>
     </div>
     <div class="theme-toggle" id="themeToggle">
-      <button id="darkBtn" title="Dark"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg></button>
-      <button id="lightBtn" title="Light"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" stroke="currentColor" stroke-width="2"/></svg></button>
+      <button class="chip-btn" id="darkBtn" title="Dark"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg></button>
+      <button class="chip-btn" id="lightBtn" title="Light"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg></button>
     </div>
   </div>
-  <p class="tagline">// signal from your drive, tuned your way</p>
 
   <div id="configWarn" class="configWarn" style="display:none;"></div>
 
-  <div class="panel">
-    <p class="panel-title"><span>Add folder</span><button id="toggleHelp" type="button">about this app</button></p>
-    <div id="helpBox" class="help" style="display:none;">
-      This deck streams straight from Google Drive — no login, because it only works with folders shared as
-      <b>"Anyone with the link."</b> A folder's already preloaded below. Add more by pasting their links here;
-      they'll show up alongside it so you can mix tracks from several folders into one playlist.
-    </div>
-    <label for="folderInput">Drive folder link or ID</label>
-    <input type="text" id="folderInput" placeholder="https://drive.google.com/drive/folders/…">
-    <button class="primary" id="addFolderBtn">Add folder</button>
-    <div id="statusMsg" class="status"></div>
-    <p class="install-tip">Tip: open this file in your phone's browser, then use "Add to Home Screen" for an app icon.</p>
-  </div>
-
-  <div class="panel" id="deckPanel" style="display:none;">
-    <p class="panel-title"><span id="queueLabel">Now playing</span></p>
-    <div class="deck">
-      <div class="reels"><div class="reel" id="reel"></div></div>
-      <div class="now-playing">
-        <p class="np-label">Track</p>
-        <p class="np-title" id="npTitle">—</p>
-        <div class="progress-row">
-          <span id="curTime">0:00</span>
-          <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
-          <span id="durTime">0:00</span>
+  <!-- Deck: now at the top -->
+  <div class="win" id="deckWin" style="display:none;">
+    <div class="win-title"><span class="cap" id="queueLabel">Now playing</span><div class="win-btns"><button class="chip-btn shade-btn" data-target="deckWin">_</button></div></div>
+    <div class="win-body">
+      <div class="lcd">
+        <div class="deck">
+          <div class="reels"><div class="reel" id="reel"></div></div>
+          <div class="now-playing">
+            <p class="np-title" id="npTitle">—</p>
+            <div class="progress-row">
+              <span id="curTime">0:00</span>
+              <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
+              <span id="durTime">0:00</span>
+            </div>
+          </div>
         </div>
+        <div class="vis-head">
+          <span class="cap-sm">Visualizer</span>
+          <div class="vis-tabs">
+            <button class="vis-tab" data-style="bars">BAR</button>
+            <button class="vis-tab" data-style="scope">WAV</button>
+            <button class="vis-tab" data-style="dots">DOT</button>
+          </div>
+        </div>
+        <canvas class="vis-canvas" id="visCanvas"></canvas>
+      </div>
+      <div class="controls">
+        <button class="ctrl-btn shuffle" id="shuffleBtn" title="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button>
+        <button class="ctrl-btn" id="prevBtn" title="Previous"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+        <button class="ctrl-btn play" id="playBtn" title="Play/Pause"><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+        <button class="ctrl-btn" id="nextBtn" title="Next"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg></button>
+      </div>
+      <div class="eq-toggle-row"><button class="ghost" id="eqToggle">5-Band EQ</button></div>
+      <div class="eq-panel" id="eqPanel">
+        <div class="eq-bands" id="eqBands"></div>
+        <div class="eq-foot"><span>±12dB PEAK</span><button class="ghost" id="eqReset">Reset</button></div>
       </div>
     </div>
-    <div class="controls">
-      <button class="ctrl-btn shuffle" id="shuffleBtn" title="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button>
-      <button class="ctrl-btn" id="prevBtn" title="Previous"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
-      <button class="ctrl-btn play" id="playBtn" title="Play/Pause"><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
-      <button class="ctrl-btn" id="nextBtn" title="Next"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg></button>
-      <div style="width:42px;"></div>
-    </div>
-    <div class="eq-toggle-row"><button class="ghost" id="eqToggle">5-band EQ</button></div>
-    <div class="eq-panel" id="eqPanel">
-      <div class="eq-bands" id="eqBands"></div>
-      <div class="eq-foot"><span>±12 dB · peaking filters</span><button class="ghost" id="eqReset">Reset</button></div>
+  </div>
+
+  <div class="win" id="playlistsWin">
+    <div class="win-title"><span class="cap">Playlists</span><div class="win-btns"><button class="chip-btn shade-btn" data-target="playlistsWin">_</button></div></div>
+    <div class="win-body">
+      <div id="playlistsList"><div class="empty">No playlists yet.</div></div>
     </div>
   </div>
 
-  <div class="panel">
-    <p class="panel-title"><span>Playlists</span></p>
-    <div id="playlistsList"><div class="empty">No playlists yet. Select tracks below and save them as one.</div></div>
+  <div class="win" id="libraryWin">
+    <div class="win-title"><span class="cap">Library</span><div class="win-btns"><button class="chip-btn shade-btn" data-target="libraryWin">_</button></div></div>
+    <div class="win-body">
+      <div id="libraryList"><div class="empty">Loading your folder…</div></div>
+      <div class="selection-bar" id="selectionBar">
+        <span id="selectionCount">0 selected</span>
+        <input type="text" id="playlistNameInput" placeholder="Playlist name">
+        <button class="ghost" id="saveSelectionBtn">Save</button>
+        <button class="ghost" id="playSelectionBtn">Play now</button>
+      </div>
+    </div>
   </div>
 
-  <div class="panel">
-    <p class="panel-title"><span>Library</span></p>
-    <div id="libraryList"><div class="empty">Loading your folder…</div></div>
-    <div class="selection-bar" id="selectionBar">
-      <span id="selectionCount">0 selected</span>
-      <input type="text" id="playlistNameInput" placeholder="Playlist name">
-      <button class="ghost" id="saveSelectionBtn">Save</button>
-      <button class="ghost" id="playSelectionBtn">Play now</button>
+  <!-- Add folder: now at the bottom -->
+  <div class="win" id="addFolderWin">
+    <div class="win-title"><span class="cap">Source</span><div class="win-btns"><button class="chip-btn shade-btn" data-target="addFolderWin">_</button></div></div>
+    <div class="win-body">
+      <label for="folderInput">Drive folder link or ID</label>
+      <input type="text" id="folderInput" placeholder="https://drive.google.com/drive/folders/…">
+      <button class="primary" id="addFolderBtn">Add folder</button>
+      <div id="statusMsg" class="status"></div>
+      <p class="install-tip">Add to Home Screen for an app icon.</p>
     </div>
   </div>
 
@@ -222,17 +296,7 @@
 
 <script>
 /* =========================================================================
-   CONFIG — edit these two lines before sending this file to anyone.
-
-   1. Google Cloud Console → APIs & Services → Library → enable "Google Drive API"
-   2. APIs & Services → Credentials → Create Credentials → API key
-      (optional: restrict it to the Drive API only, under "API restrictions")
-   3. Paste that key below as API_KEY.
-   4. Make sure the target Drive folder is shared as "Anyone with the link — Viewer".
-
-   Because there's no sign-in, this key is visible to anyone who opens this
-   file — that's the tradeoff for a no-auth, no-hosting app. Fine for a small
-   group you trust; if this ever goes wide, switch back to the sign-in version.
+   CONFIG
    ========================================================================= */
 const API_KEY = 'AIzaSyDTD4v7TCNL8CzImICG3b_Wefiaz1Nw0aU';
 const DEFAULT_FOLDER_ID = '1AcBAI4uLHdb3HRcwyKzno60WhK57PhoJ';
@@ -243,44 +307,49 @@ const configWarn = els('configWarn');
 const folderInput = els('folderInput'), addFolderBtn = els('addFolderBtn'), statusMsg = els('statusMsg');
 const libraryList = els('libraryList'), playlistsList = els('playlistsList');
 const selectionBar = els('selectionBar'), selectionCount = els('selectionCount'), playlistNameInput = els('playlistNameInput');
-const deckPanel = els('deckPanel'), queueLabel = els('queueLabel');
+const deckWin = els('deckWin'), queueLabel = els('queueLabel');
 const npTitle = els('npTitle'), reel = els('reel'), audioEl = els('audioEl');
 const playBtn = els('playBtn'), playIcon = els('playIcon'), prevBtn = els('prevBtn'), nextBtn = els('nextBtn'), shuffleBtn = els('shuffleBtn');
 const progressTrack = els('progressTrack'), progressFill = els('progressFill'), curTimeEl = els('curTime'), durTimeEl = els('durTime');
-const toggleHelp = els('toggleHelp'), helpBox = els('helpBox');
 const eqToggle = els('eqToggle'), eqPanel = els('eqPanel'), eqBands = els('eqBands'), eqReset = els('eqReset');
 const darkBtn = els('darkBtn'), lightBtn = els('lightBtn');
+const visCanvas = els('visCanvas'), visCtx = visCanvas.getContext('2d');
 
 if (!API_KEY || API_KEY === 'YOUR_API_KEY') {
   configWarn.style.display = 'block';
-  configWarn.textContent = 'Setup needed: open this file and replace API_KEY at the top of the script with your own Google API key before sending it out.';
+  configWarn.textContent = 'Setup needed: replace API_KEY at the top of the script.';
   libraryList.innerHTML = '<div class="empty">Add your API key to load the preloaded folder.</div>';
 } else {
   window.addEventListener('DOMContentLoaded', () => addFolder(DEFAULT_FOLDER_ID));
 }
 
-toggleHelp.addEventListener('click', () => { helpBox.style.display = helpBox.style.display === 'none' ? 'block' : 'none'; });
+/* ---------- Window shade toggles ---------- */
+document.querySelectorAll('.shade-btn').forEach(btn => {
+  btn.addEventListener('click', () => { els(btn.dataset.target).classList.toggle('shaded'); });
+});
 eqToggle.addEventListener('click', () => eqPanel.classList.toggle('show'));
 
 /* ---------- Storage ---------- */
 const store = {
   async get(key) {
     if (window.storage) { try { const r = await window.storage.get(key); return r ? JSON.parse(r.value) : null; } catch (e) { return null; } }
-    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch (e) { return null; }
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch (e) { console.error('store.get failed', key, e); return null; }
   },
   async set(key, value) {
-    if (window.storage) { try { await window.storage.set(key, JSON.stringify(value)); return; } catch (e) {} }
-    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+    if (window.storage) { try { await window.storage.set(key, JSON.stringify(value)); return true; } catch (e) { console.error('window.storage.set failed', key, e); } }
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { console.error('localStorage.set failed', key, e); return false; }
   }
 };
 
 /* ---------- Theme ---------- */
+let REDC = '#FF2B22';
+function refreshRedColor() { REDC = getComputedStyle(document.documentElement).getPropertyValue('--red').trim() || REDC; }
 async function initTheme() {
   let theme = await store.get('ss_theme');
   if (!theme) theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   applyTheme(theme);
 }
-function applyTheme(theme) { document.documentElement.setAttribute('data-theme', theme); darkBtn.classList.toggle('active', theme === 'dark'); lightBtn.classList.toggle('active', theme === 'light'); }
+function applyTheme(theme) { document.documentElement.setAttribute('data-theme', theme); darkBtn.classList.toggle('active', theme === 'dark'); lightBtn.classList.toggle('active', theme === 'light'); refreshRedColor(); }
 darkBtn.addEventListener('click', () => { applyTheme('dark'); store.set('ss_theme', 'dark'); });
 lightBtn.addEventListener('click', () => { applyTheme('light'); store.set('ss_theme', 'light'); });
 initTheme();
@@ -312,7 +381,7 @@ async function addFolder(rawInput) {
     if (folderInput.value.trim() === rawInput.trim()) folderInput.value = '';
     setStatus(`Loaded "${meta.name}" — ${tracks.length} track${tracks.length===1?'':'s'}.`, 'ok');
     renderLibrary();
-  } catch (err) { setStatus("Couldn't load that folder — " + err.message, 'err'); }
+  } catch (err) { console.error('addFolder failed', err); setStatus("Couldn't load that folder — " + err.message, 'err'); }
   finally { addFolderBtn.disabled = false; }
 }
 
@@ -321,7 +390,7 @@ function renderLibrary() {
   libraryList.innerHTML = '';
   folders.forEach(folder => {
     const group = document.createElement('div'); group.className = 'folder-group';
-    group.innerHTML = `<div class="folder-head"><span class="fname">${escapeHtml(folder.name)}</span><span class="fcount">${folder.tracks.length} tracks</span><button class="remove" data-folder="${folder.id}">remove</button></div>`;
+    group.innerHTML = `<div class="folder-head"><span class="fname">${escapeHtml(folder.name)}</span><span class="fcount">${folder.tracks.length} trk</span><button class="remove" data-folder="${folder.id}">remove</button></div>`;
     const list = document.createElement('div');
     folder.tracks.forEach(t => {
       const row = document.createElement('div'); row.className = 'track'; row.dataset.id = t.id;
@@ -340,24 +409,33 @@ function updateSelectionBar() { selectionBar.classList.toggle('show', selected.s
 els('saveSelectionBtn').addEventListener('click', async () => {
   const name = playlistNameInput.value.trim();
   if (!name) { setStatus('Give the playlist a name.', 'err'); return; }
-  if (!selected.size) return;
-  const playlists = (await store.get('ss_playlists')) || [];
-  playlists.push({ id: 'pl_' + Date.now(), name, tracks: Array.from(selected.values()) });
-  await store.set('ss_playlists', playlists);
-  selected.clear(); playlistNameInput.value = ''; updateSelectionBar(); renderLibrary(); renderPlaylists();
+  if (!selected.size) { setStatus('Check at least one track first.', 'err'); return; }
+  try {
+    const playlists = (await store.get('ss_playlists')) || [];
+    playlists.push({ id: 'pl_' + Date.now(), name, tracks: Array.from(selected.values()) });
+    const ok = await store.set('ss_playlists', playlists);
+    if (!ok) { setStatus('Could not save — your browser may be blocking local storage.', 'err'); return; }
+    selected.clear(); playlistNameInput.value = ''; updateSelectionBar(); renderLibrary();
+    await renderPlaylists();
+    setStatus(`Saved playlist "${name}".`, 'ok');
+  } catch (err) { console.error('save playlist failed', err); setStatus('Could not save that playlist — ' + err.message, 'err'); }
 });
-els('playSelectionBtn').addEventListener('click', () => { if (!selected.size) return; playAdhoc(Array.from(selected.values()), 0, 'Selection'); });
+els('playSelectionBtn').addEventListener('click', () => { if (!selected.size) { setStatus('Check at least one track first.', 'err'); return; } playAdhoc(Array.from(selected.values()), 0, 'Selection'); });
 
 async function renderPlaylists() {
-  const playlists = (await store.get('ss_playlists')) || [];
-  if (!playlists.length) { playlistsList.innerHTML = '<div class="empty">No playlists yet. Select tracks below and save them as one.</div>'; return; }
+  let playlists = [];
+  try { playlists = (await store.get('ss_playlists')) || []; } catch (err) { console.error('load playlists failed', err); }
+  if (!playlists.length) { playlistsList.innerHTML = '<div class="empty">No playlists yet.</div>'; return; }
   playlistsList.innerHTML = '';
   playlists.forEach(pl => {
     const row = document.createElement('div'); row.className = 'playlist-row';
-    row.innerHTML = `<span class="pname">${escapeHtml(pl.name)}</span><span class="pcount">${pl.tracks.length} tracks</span><button class="pdel">✕</button>`;
-    row.querySelector('.pname').addEventListener('click', () => playAdhoc(pl.tracks, 0, pl.name));
-    row.querySelector('.pcount').addEventListener('click', () => playAdhoc(pl.tracks, 0, pl.name));
-    row.querySelector('.pdel').addEventListener('click', async (e) => { e.stopPropagation(); const cur = (await store.get('ss_playlists')) || []; await store.set('ss_playlists', cur.filter(p => p.id !== pl.id)); renderPlaylists(); });
+    row.innerHTML = `<span class="pname">${escapeHtml(pl.name)}</span><span class="pcount">${pl.tracks.length} trk</span><button class="pdel">✕</button>`;
+    row.addEventListener('click', () => playAdhoc(pl.tracks, 0, pl.name));
+    row.querySelector('.pdel').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      try { const cur = (await store.get('ss_playlists')) || []; await store.set('ss_playlists', cur.filter(p => p.id !== pl.id)); await renderPlaylists(); }
+      catch (err) { console.error('delete playlist failed', err); }
+    });
     playlistsList.appendChild(row);
   });
 }
@@ -366,7 +444,7 @@ renderPlaylists();
 /* ---------- 5-band EQ ---------- */
 const EQ_BANDS = [60, 250, 1000, 4000, 12000];
 const EQ_LABELS = ['60', '250', '1K', '4K', '12K'];
-let audioCtx = null, filters = [], audioGraphReady = false;
+let audioCtx = null, filters = [], analyser = null, freqData = null, timeData = null, audioGraphReady = false;
 
 function buildEqUi() {
   eqBands.innerHTML = '';
@@ -401,12 +479,101 @@ function setupAudioGraph() {
       f.gain.value = Number(els('eqSlider' + i).value);
       return f;
     });
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.75;
+    freqData = new Uint8Array(analyser.frequencyBinCount);
+    timeData = new Uint8Array(analyser.fftSize);
     let node = sourceNode;
     filters.forEach(f => { node.connect(f); node = f; });
-    node.connect(audioCtx.destination);
+    node.connect(analyser);
+    analyser.connect(audioCtx.destination);
     audioGraphReady = true;
-  } catch (e) { /* Web Audio graph unavailable — playback still works, EQ just won't apply */ }
+  } catch (e) { console.error('Web Audio graph unavailable — EQ/visualizer disabled, playback unaffected', e); }
 }
+
+/* ---------- Visualizer ---------- */
+let visStyle = 'bars', silentFrames = 0;
+document.querySelectorAll('.vis-tab').forEach(btn => {
+  btn.addEventListener('click', () => { visStyle = btn.dataset.style; document.querySelectorAll('.vis-tab').forEach(b => b.classList.toggle('active', b === btn)); store.set('ss_vis_style', visStyle); });
+});
+async function restoreVisStyle() {
+  const saved = await store.get('ss_vis_style');
+  visStyle = saved || 'bars';
+  document.querySelectorAll('.vis-tab').forEach(b => b.classList.toggle('active', b.dataset.style === visStyle));
+}
+restoreVisStyle();
+
+function resizeVisCanvas() { visCanvas.width = visCanvas.clientWidth; visCanvas.height = visCanvas.clientHeight; }
+window.addEventListener('resize', resizeVisCanvas);
+window.addEventListener('load', resizeVisCanvas);
+setTimeout(resizeVisCanvas, 300);
+
+function pseudoLevel(i, t) { return (Math.sin(t*1.7+i*0.9)+Math.sin(t*3.1+i*1.7)*0.6+Math.sin(t*0.53+i*0.31)*0.8+2.4)/4.8; }
+
+function drawBars(simulated) {
+  const w = visCanvas.width, h = visCanvas.height, count = 28, gap = 2;
+  const barW = (w - (count - 1) * gap) / count;
+  const t = performance.now() / 1000;
+  for (let i = 0; i < count; i++) {
+    let v;
+    if (simulated) v = audioEl.paused ? 0 : Math.max(0, pseudoLevel(i, t) - 0.15);
+    else { const idx = Math.floor(i / count * freqData.length); v = freqData[idx] / 255; }
+    const barH = Math.max(2, v * h);
+    const x = i * (barW + gap), y = h - barH;
+    const grad = visCtx.createLinearGradient(0, y, 0, h);
+    grad.addColorStop(0, '#ffb199'); grad.addColorStop(1, REDC);
+    visCtx.fillStyle = grad; visCtx.shadowColor = REDC; visCtx.shadowBlur = 4;
+    visCtx.fillRect(x, y, barW, barH);
+  }
+}
+function drawScope(simulated) {
+  const w = visCanvas.width, h = visCanvas.height, N = 64;
+  if (!simulated) analyser.getByteTimeDomainData(timeData);
+  visCtx.beginPath();
+  const t = performance.now() / 300;
+  for (let i = 0; i < N; i++) {
+    let v;
+    if (simulated) v = audioEl.paused ? 0.5 : 0.5 + (pseudoLevel(i, t) - 0.5) * 0.5;
+    else { const idx = Math.floor(i / N * timeData.length); v = timeData[idx] / 255; }
+    const x = i / (N - 1) * w, y = v * h;
+    if (i === 0) visCtx.moveTo(x, y); else visCtx.lineTo(x, y);
+  }
+  visCtx.strokeStyle = REDC; visCtx.lineWidth = 2; visCtx.shadowColor = REDC; visCtx.shadowBlur = 5;
+  visCtx.stroke();
+}
+function drawDots(simulated) {
+  const cols = 18, rows = 8, w = visCanvas.width, h = visCanvas.height;
+  const cellW = w / cols, cellH = h / rows, t = performance.now() / 1000;
+  for (let c = 0; c < cols; c++) {
+    let v;
+    if (simulated) v = audioEl.paused ? 0 : Math.max(0, pseudoLevel(c, t) - 0.15);
+    else { const idx = Math.floor(c / cols * freqData.length); v = freqData[idx] / 255; }
+    const lit = Math.round(v * rows);
+    for (let r = 0; r < rows; r++) {
+      const isLit = r >= rows - lit;
+      const cx = c * cellW + cellW / 2, cy = r * cellH + cellH / 2;
+      visCtx.beginPath();
+      visCtx.arc(cx, cy, Math.min(cellW, cellH) * 0.26, 0, Math.PI * 2);
+      if (isLit) { visCtx.fillStyle = REDC; visCtx.shadowColor = REDC; visCtx.shadowBlur = 4; }
+      else { visCtx.fillStyle = 'rgba(255,255,255,.07)'; visCtx.shadowBlur = 0; }
+      visCtx.fill();
+    }
+  }
+}
+function drawVisualizer() {
+  requestAnimationFrame(drawVisualizer);
+  if (!visCanvas.width) return;
+  visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
+  let hasSignal = false;
+  if (analyser) { analyser.getByteFrequencyData(freqData); hasSignal = freqData.some(v => v > 2); }
+  if (!hasSignal && !audioEl.paused) silentFrames++; else silentFrames = Math.max(0, silentFrames - 2);
+  const simulated = silentFrames > 40;
+  if (visStyle === 'scope') drawScope(simulated);
+  else if (visStyle === 'dots') drawDots(simulated);
+  else drawBars(simulated);
+}
+requestAnimationFrame(drawVisualizer);
 
 /* ---------- Player / queue ---------- */
 let queueTracks = [], order = [], pos = 0, shuffleOn = false;
@@ -414,8 +581,9 @@ let queueTracks = [], order = [], pos = 0, shuffleOn = false;
 function playAdhoc(tracks, startIndex, label) {
   queueTracks = tracks; order = tracks.map((_, i) => i);
   if (shuffleOn) shuffleOrder(startIndex); else pos = startIndex;
-  queueLabel.textContent = 'Playing from ' + label;
-  deckPanel.style.display = 'block';
+  queueLabel.textContent = 'Playing: ' + label;
+  deckWin.style.display = 'block'; deckWin.classList.remove('shaded');
+  setTimeout(resizeVisCanvas, 50);
   loadTrack(order[pos], true);
 }
 function shuffleOrder(keepIndex) {
