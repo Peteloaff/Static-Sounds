@@ -139,17 +139,6 @@
   .ctrl-btn svg{width:15px;height:15px;}
   .ctrl-btn.play svg{width:19px;height:19px;}
 
-  .eq-toggle-row{display:flex;justify-content:flex-end;margin:16px 0 0;}
-  .eq-panel{display:none;border-top:1px solid var(--line);margin-top:14px;padding-top:16px;}
-  .eq-panel.show{display:block;}
-  .eq-bands{display:flex;justify-content:space-between;gap:6px;}
-  .eq-band{display:flex;flex-direction:column;align-items:center;flex:1;}
-  .eq-val{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--red);margin-bottom:5px;height:13px;}
-  .eq-slider-wrap{height:96px;display:flex;align-items:center;justify-content:center;width:100%;}
-  .eq-band input[type=range]{width:88px; transform:rotate(-90deg); accent-color:var(--red); cursor:pointer;}
-  .eq-freq{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-top:6px;}
-  .eq-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;}
-  .eq-foot span{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
 
   /* ---- library / playlists ---- */
   .folder-group{margin-bottom:14px;}
@@ -243,12 +232,6 @@
         <button class="ctrl-btn" id="stopBtn" title="Stop"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
         <button class="ctrl-btn" id="nextBtn" title="Next"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg></button>
       </div>
-
-      <div class="eq-toggle-row"><button class="ghost" id="eqToggle">5-Band EQ</button></div>
-      <div class="eq-panel" id="eqPanel">
-        <div class="eq-bands" id="eqBands"></div>
-        <div class="eq-foot"><span>±12dB PEAK</span><button class="ghost" id="eqReset">Reset</button></div>
-      </div>
     </div>
   </div>
 
@@ -309,7 +292,6 @@ const npTitle = els('npTitle'), reel = els('reel'), audioEl = els('audioEl');
 const playBtn = els('playBtn'), playIcon = els('playIcon'), prevBtn = els('prevBtn'), nextBtn = els('nextBtn'), shuffleBtn = els('shuffleBtn'), stopBtn = els('stopBtn');
 const npTitleWrap = els('npTitleWrap');
 const progressTrack = els('progressTrack'), progressFill = els('progressFill'), curTimeEl = els('curTime'), durTimeEl = els('durTime');
-const eqToggle = els('eqToggle'), eqPanel = els('eqPanel'), eqBands = els('eqBands'), eqReset = els('eqReset');
 const darkBtn = els('darkBtn'), lightBtn = els('lightBtn');
 const visCanvas = els('visCanvas'), visCtx = visCanvas.getContext('2d');
 
@@ -325,7 +307,6 @@ if (!API_KEY || API_KEY === 'YOUR_API_KEY') {
 document.querySelectorAll('.shade-btn').forEach(btn => {
   btn.addEventListener('click', () => { els(btn.dataset.target).classList.toggle('shaded'); });
 });
-eqToggle.addEventListener('click', () => { eqPanel.classList.toggle('show'); setupAudioGraph(); });
 
 /* ---------- Storage ---------- */
 const store = {
@@ -439,65 +420,8 @@ async function renderPlaylists() {
 }
 renderPlaylists();
 
-/* ---------- 5-band EQ ---------- */
-const EQ_BANDS = [60, 250, 1000, 4000, 12000];
-const EQ_LABELS = ['60', '250', '1K', '4K', '12K'];
-let audioCtx = null, filters = [], analyser = null, freqData = null, timeData = null, audioGraphReady = false;
-
-function buildEqUi() {
-  eqBands.innerHTML = '';
-  EQ_BANDS.forEach((freq, i) => {
-    const band = document.createElement('div'); band.className = 'eq-band';
-    band.innerHTML = `<div class="eq-val" id="eqVal${i}">0dB</div><div class="eq-slider-wrap"><input type="range" min="-12" max="12" value="0" step="1" id="eqSlider${i}"></div><div class="eq-freq">${EQ_LABELS[i]}</div>`;
-    eqBands.appendChild(band);
-  });
-  EQ_BANDS.forEach((freq, i) => {
-    els('eqSlider' + i).addEventListener('input', (e) => {
-      const v = Number(e.target.value);
-      els('eqVal' + i).textContent = (v > 0 ? '+' : '') + v + 'dB';
-      if (filters[i]) filters[i].gain.value = v;
-      saveEqSettings();
-    });
-  });
-}
-buildEqUi();
-async function saveEqSettings() { const values = EQ_BANDS.map((_, i) => Number(els('eqSlider' + i).value)); await store.set('ss_eq', values); }
-async function restoreEqSettings() { const values = await store.get('ss_eq'); if (!values) return; values.forEach((v, i) => { const s = els('eqSlider' + i); if (s) { s.value = v; s.dispatchEvent(new Event('input')); } }); }
-restoreEqSettings();
-eqReset.addEventListener('click', () => { EQ_BANDS.forEach((_, i) => { const s = els('eqSlider' + i); s.value = 0; s.dispatchEvent(new Event('input')); }); });
-
-/* Routing audio through a Web Audio graph (needed for the EQ + real visualizer
-   data) makes mobile browsers much more likely to suspend playback in the
-   background/lock screen, since they throttle that graph aggressively to save
-   battery. So this is only called when the EQ panel is actually opened — plain
-   playback stays on the default <audio> path, which backgrounds far more
-   reliably. Once called, it stays on for the rest of the session (the browser
-   won't let a media element un-route back to default output). */
-function setupAudioGraph() {
-  if (audioGraphReady) return;
-  try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const sourceNode = audioCtx.createMediaElementSource(audioEl);
-    filters = EQ_BANDS.map((freq, i) => {
-      const f = audioCtx.createBiquadFilter();
-      f.type = 'peaking'; f.frequency.value = freq; f.Q.value = 1;
-      f.gain.value = Number(els('eqSlider' + i).value);
-      return f;
-    });
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 256;
-    analyser.smoothingTimeConstant = 0.75;
-    freqData = new Uint8Array(analyser.frequencyBinCount);
-    timeData = new Uint8Array(analyser.fftSize);
-    let node = sourceNode;
-    filters.forEach(f => { node.connect(f); node = f; });
-    node.connect(analyser);
-    analyser.connect(audioCtx.destination);
-    audioGraphReady = true;
-  } catch (e) { console.error('Web Audio graph unavailable — EQ/visualizer disabled, playback unaffected', e); }
-}
-
-/* ---------- Visualizer ---------- */
+/* ---------- Visualizer (self-animated, no Web Audio graph — playback
+   audio is never routed through anything mobile browsers can suspend) ---------- */
 let visStyle = 'bars', silentFrames = 0;
 document.querySelectorAll('.vis-tab').forEach(btn => {
   btn.addEventListener('click', () => { visStyle = btn.dataset.style; document.querySelectorAll('.vis-tab').forEach(b => b.classList.toggle('active', b === btn)); store.set('ss_vis_style', visStyle); });
@@ -516,14 +440,12 @@ setTimeout(resizeVisCanvas, 300);
 
 function pseudoLevel(i, t) { return (Math.sin(t*1.7+i*0.9)+Math.sin(t*3.1+i*1.7)*0.6+Math.sin(t*0.53+i*0.31)*0.8+2.4)/4.8; }
 
-function drawBars(simulated) {
+function drawBars() {
   const w = visCanvas.width, h = visCanvas.height, count = 28, gap = 2;
   const barW = (w - (count - 1) * gap) / count;
   const t = performance.now() / 1000;
   for (let i = 0; i < count; i++) {
-    let v;
-    if (simulated) v = audioEl.paused ? 0 : Math.max(0, pseudoLevel(i, t) - 0.15);
-    else { const idx = Math.floor(i / count * freqData.length); v = freqData[idx] / 255; }
+    const v = audioEl.paused ? 0 : Math.max(0, pseudoLevel(i, t) - 0.15);
     const barH = Math.max(2, v * h);
     const x = i * (barW + gap), y = h - barH;
     const grad = visCtx.createLinearGradient(0, y, 0, h);
@@ -532,28 +454,23 @@ function drawBars(simulated) {
     visCtx.fillRect(x, y, barW, barH);
   }
 }
-function drawScope(simulated) {
+function drawScope() {
   const w = visCanvas.width, h = visCanvas.height, N = 64;
-  if (!simulated) analyser.getByteTimeDomainData(timeData);
   visCtx.beginPath();
   const t = performance.now() / 300;
   for (let i = 0; i < N; i++) {
-    let v;
-    if (simulated) v = audioEl.paused ? 0.5 : 0.5 + (pseudoLevel(i, t) - 0.5) * 0.5;
-    else { const idx = Math.floor(i / N * timeData.length); v = timeData[idx] / 255; }
+    const v = audioEl.paused ? 0.5 : 0.5 + (pseudoLevel(i, t) - 0.5) * 0.5;
     const x = i / (N - 1) * w, y = v * h;
     if (i === 0) visCtx.moveTo(x, y); else visCtx.lineTo(x, y);
   }
   visCtx.strokeStyle = REDC; visCtx.lineWidth = 2; visCtx.shadowColor = REDC; visCtx.shadowBlur = 5;
   visCtx.stroke();
 }
-function drawDots(simulated) {
+function drawDots() {
   const cols = 18, rows = 8, w = visCanvas.width, h = visCanvas.height;
   const cellW = w / cols, cellH = h / rows, t = performance.now() / 1000;
   for (let c = 0; c < cols; c++) {
-    let v;
-    if (simulated) v = audioEl.paused ? 0 : Math.max(0, pseudoLevel(c, t) - 0.15);
-    else { const idx = Math.floor(c / cols * freqData.length); v = freqData[idx] / 255; }
+    const v = audioEl.paused ? 0 : Math.max(0, pseudoLevel(c, t) - 0.15);
     const lit = Math.round(v * rows);
     for (let r = 0; r < rows; r++) {
       const isLit = r >= rows - lit;
@@ -570,13 +487,9 @@ function drawVisualizer() {
   requestAnimationFrame(drawVisualizer);
   if (!visCanvas.width) return;
   visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
-  let hasSignal = false;
-  if (analyser) { analyser.getByteFrequencyData(freqData); hasSignal = freqData.some(v => v > 2); }
-  if (!hasSignal && !audioEl.paused) silentFrames++; else silentFrames = Math.max(0, silentFrames - 2);
-  const simulated = silentFrames > 40;
-  if (visStyle === 'scope') drawScope(simulated);
-  else if (visStyle === 'dots') drawDots(simulated);
-  else drawBars(simulated);
+  if (visStyle === 'scope') drawScope();
+  else if (visStyle === 'dots') drawDots();
+  else drawBars();
 }
 requestAnimationFrame(drawVisualizer);
 
@@ -647,8 +560,6 @@ setupMediaSessionHandlers();
    screen locks or the tab backgrounds, which can silence playback even
    though the <audio> element itself is still "playing." Keep forcing it
    back awake so the EQ doesn't cost you background playback. */
-setInterval(() => { if (isPlayingIntent && audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {}); }, 1500);
-document.addEventListener('visibilitychange', () => { if (isPlayingIntent && audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {}); });
 
 function loadTrack(trackIndex, autoplay) {
   const t = queueTracks[trackIndex];
@@ -660,19 +571,13 @@ function loadTrack(trackIndex, autoplay) {
   audioEl.src = `https://www.googleapis.com/drive/v3/files/${t.id}?alt=media&key=${API_KEY}`;
   audioEl.load();
   loadRetries = 0;
-  /* NOTE: the EQ's Web Audio graph is only created when the EQ panel is actually
-     opened (see eqToggle/eqReset below), not here. Routing every track through
-     that graph made background/lock-screen playback fragile — see setupAudioGraph
-     comment for why. Plain playback stays on the reliable default audio path
-     unless you're actively using the EQ. */
-  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   if (autoplay) audioEl.play().catch(() => setStatus('Tap play to start.', 'err'));
 }
 function markActive(trackId, playing) { document.querySelectorAll('.track').forEach(el => { const isActive = el.dataset.id === trackId; el.classList.toggle('active', isActive); el.classList.toggle('playing', isActive && playing); }); }
 function setPlayingIcon(isPlaying) { playIcon.innerHTML = isPlaying ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>'; reel.classList.toggle('spinning', isPlaying); document.querySelectorAll('.track.active').forEach(el => el.classList.toggle('playing', isPlaying)); }
-audioEl.addEventListener('play', () => { setPlayingIcon(true); isPlayingIntent = true; if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); });
+audioEl.addEventListener('play', () => { setPlayingIcon(true); isPlayingIntent = true; if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; });
 audioEl.addEventListener('pause', () => { setPlayingIcon(false); isPlayingIntent = false; if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; });
-playBtn.addEventListener('click', () => { if (!queueTracks.length) return; if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); if (audioEl.paused) audioEl.play(); else audioEl.pause(); });
+playBtn.addEventListener('click', () => { if (!queueTracks.length) return; if (audioEl.paused) audioEl.play(); else audioEl.pause(); });
 function goNext() { if (!order.length) return; pos = (pos + 1) % order.length; loadTrack(order[pos], true); }
 function goPrev() { if (!order.length) return; if (audioEl.currentTime > 3) { audioEl.currentTime = 0; return; } pos = (pos - 1 + order.length) % order.length; loadTrack(order[pos], true); }
 nextBtn.addEventListener('click', goNext);
