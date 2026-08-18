@@ -325,7 +325,7 @@ if (!API_KEY || API_KEY === 'YOUR_API_KEY') {
 document.querySelectorAll('.shade-btn').forEach(btn => {
   btn.addEventListener('click', () => { els(btn.dataset.target).classList.toggle('shaded'); });
 });
-eqToggle.addEventListener('click', () => eqPanel.classList.toggle('show'));
+eqToggle.addEventListener('click', () => { eqPanel.classList.toggle('show'); setupAudioGraph(); });
 
 /* ---------- Storage ---------- */
 const store = {
@@ -466,6 +466,13 @@ async function restoreEqSettings() { const values = await store.get('ss_eq'); if
 restoreEqSettings();
 eqReset.addEventListener('click', () => { EQ_BANDS.forEach((_, i) => { const s = els('eqSlider' + i); s.value = 0; s.dispatchEvent(new Event('input')); }); });
 
+/* Routing audio through a Web Audio graph (needed for the EQ + real visualizer
+   data) makes mobile browsers much more likely to suspend playback in the
+   background/lock screen, since they throttle that graph aggressively to save
+   battery. So this is only called when the EQ panel is actually opened — plain
+   playback stays on the default <audio> path, which backgrounds far more
+   reliably. Once called, it stays on for the rest of the session (the browser
+   won't let a media element un-route back to default output). */
 function setupAudioGraph() {
   if (audioGraphReady) return;
   try {
@@ -651,7 +658,13 @@ function loadTrack(trackIndex, autoplay) {
   updateMediaSession(t, queueLabel.textContent.replace('Playing: ', ''));
   markActive(t.id, autoplay);
   audioEl.src = `https://www.googleapis.com/drive/v3/files/${t.id}?alt=media&key=${API_KEY}`;
-  setupAudioGraph();
+  audioEl.load();
+  loadRetries = 0;
+  /* NOTE: the EQ's Web Audio graph is only created when the EQ panel is actually
+     opened (see eqToggle/eqReset below), not here. Routing every track through
+     that graph made background/lock-screen playback fragile — see setupAudioGraph
+     comment for why. Plain playback stays on the reliable default audio path
+     unless you're actively using the EQ. */
   if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   if (autoplay) audioEl.play().catch(() => setStatus('Tap play to start.', 'err'));
 }
@@ -666,6 +679,34 @@ nextBtn.addEventListener('click', goNext);
 prevBtn.addEventListener('click', goPrev);
 stopBtn.addEventListener('click', () => { audioEl.pause(); audioEl.currentTime = 0; });
 audioEl.addEventListener('ended', goNext);
+
+/* ---------- Playback error recovery ---------- */
+let loadRetries = 0;
+let stallTimer = null;
+function clearStallTimer() { if (stallTimer) { clearTimeout(stallTimer); stallTimer = null; } }
+function armStallTimer() {
+  clearStallTimer();
+  stallTimer = setTimeout(() => {
+    if (isPlayingIntent && audioEl.paused) { console.error('Playback stalled — retrying'); retryOrSkip(); }
+  }, 8000);
+}
+function retryOrSkip() {
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+  loadRetries++;
+  if (loadRetries <= 2) {
+    setStatus('Playback hiccup — retrying…', 'err');
+    const t = queueTracks[order[pos]];
+    if (t) { audioEl.src = `https://www.googleapis.com/drive/v3/files/${t.id}?alt=media&key=${API_KEY}`; audioEl.load(); audioEl.play().catch(() => {}); armStallTimer(); }
+  } else {
+    setStatus('That track kept failing — skipping ahead.', 'err');
+    loadRetries = 0;
+    goNext();
+  }
+}
+audioEl.addEventListener('error', () => { console.error('audio element error', audioEl.error); if (isPlayingIntent) retryOrSkip(); });
+audioEl.addEventListener('stalled', armStallTimer);
+audioEl.addEventListener('waiting', armStallTimer);
+audioEl.addEventListener('playing', () => { clearStallTimer(); loadRetries = 0; });
 audioEl.addEventListener('timeupdate', () => {
   if (!audioEl.duration) return;
   progressFill.style.width = (audioEl.currentTime/audioEl.duration*100)+'%';
