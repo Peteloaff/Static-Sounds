@@ -534,6 +534,7 @@ function playAdhoc(tracks, startIndex, label) {
   queueLabel.textContent = 'Playing: ' + label;
   deckWin.style.display = 'block'; deckWin.classList.remove('shaded');
   setTimeout(resizeVisCanvas, 50);
+  loadRetries = 0;
   loadTrack(order[pos], true);
 }
 function shuffleOrder(keepIndex) {
@@ -596,45 +597,95 @@ setupMediaSessionHandlers();
 function loadTrack(trackIndex, autoplay) {
   const t = queueTracks[trackIndex];
   if (!t) return;
+  const myToken = ++loadToken;
   npTitle.textContent = t.name;
   updateMarquee();
   updateMediaSession(t, queueLabel.textContent.replace('Playing: ', ''));
   markActive(t.id, autoplay);
-  audioEl.src = `https://www.googleapis.com/drive/v3/files/${t.id}?alt=media&key=${API_KEY}`;
-  audioEl.load();
-  loadRetries = 0;
+  loadTrackData(t, myToken, autoplay);
+}
+
+/* ---------- Fully-downloaded playback ----------
+   Instead of pointing <audio> at a live Drive URL (which can freeze mid-song
+   on any network blip), each track is fetched completely into memory first,
+   then played from a local blob URL — no network involved once playback
+   starts. The next track is prefetched in the background while the current
+   one plays, so skipping doesn't hit the network at the moment you skip. */
+let currentBlobUrl = null;
+let nextPrefetch = { trackId: null, blobUrl: null, promise: null };
+let loadToken = 0;
+
+async function fetchTrackBlob(trackId) {
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${trackId}?alt=media&key=${API_KEY}`);
+  if (!res.ok) throw new Error('Drive returned ' + res.status);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
+function peekNextTrackId() {
+  if (!order.length) return null;
+  const nextPos = (pos + 1) % order.length;
+  const t = queueTracks[order[nextPos]];
+  return t ? t.id : null;
+}
+
+function schedulePrefetchNext() {
+  const tid = peekNextTrackId();
+  if (!tid || tid === nextPrefetch.trackId) return;
+  if (nextPrefetch.blobUrl) URL.revokeObjectURL(nextPrefetch.blobUrl);
+  const entry = { trackId: tid, blobUrl: null, promise: null };
+  nextPrefetch = entry;
+  entry.promise = fetchTrackBlob(tid).then(url => {
+    if (nextPrefetch === entry) entry.blobUrl = url;
+    else URL.revokeObjectURL(url); // superseded while fetching
+  }).catch(err => {
+    console.error('prefetch failed', err);
+    if (nextPrefetch === entry) nextPrefetch = { trackId: null, blobUrl: null, promise: null };
+  });
+}
+
+async function loadTrackData(t, myToken, autoplay) {
+  let blobUrl = null;
+  try {
+    if (nextPrefetch.trackId === t.id) {
+      const entry = nextPrefetch;
+      blobUrl = entry.blobUrl || (await entry.promise, entry.blobUrl);
+      if (nextPrefetch === entry) nextPrefetch = { trackId: null, blobUrl: null, promise: null };
+    }
+    if (!blobUrl) { setStatus('Loading…'); blobUrl = await fetchTrackBlob(t.id); }
+  } catch (err) {
+    if (myToken !== loadToken) return;
+    console.error('track load failed', err);
+    retryOrSkip('download failed: ' + err.message);
+    return;
+  }
+  if (myToken !== loadToken) { URL.revokeObjectURL(blobUrl); return; }
+  if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+  currentBlobUrl = blobUrl;
+  audioEl.src = blobUrl;
+  setStatus('');
   if (autoplay) audioEl.play().catch(() => setStatus('Tap play to start.', 'err'));
+  schedulePrefetchNext();
 }
 function markActive(trackId, playing) { document.querySelectorAll('.track').forEach(el => { const isActive = el.dataset.id === trackId; el.classList.toggle('active', isActive); el.classList.toggle('playing', isActive && playing); }); }
 function setPlayingIcon(isPlaying) { playIcon.innerHTML = isPlaying ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>'; reel.classList.toggle('spinning', isPlaying); document.querySelectorAll('.track.active').forEach(el => el.classList.toggle('playing', isPlaying)); }
 audioEl.addEventListener('play', () => { setPlayingIcon(true); isPlayingIntent = true; if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; });
 audioEl.addEventListener('pause', () => { setPlayingIcon(false); isPlayingIntent = false; if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; });
 playBtn.addEventListener('click', () => { if (!queueTracks.length) return; if (audioEl.paused) audioEl.play(); else audioEl.pause(); });
-function goNext() { if (!order.length) return; pos = (pos + 1) % order.length; loadTrack(order[pos], true); }
-function goPrev() { if (!order.length) return; if (audioEl.currentTime > 3) { audioEl.currentTime = 0; return; } pos = (pos - 1 + order.length) % order.length; loadTrack(order[pos], true); }
+function goNext() { if (!order.length) return; loadRetries = 0; pos = (pos + 1) % order.length; loadTrack(order[pos], true); }
+function goPrev() { if (!order.length) return; if (audioEl.currentTime > 3) { audioEl.currentTime = 0; return; } loadRetries = 0; pos = (pos - 1 + order.length) % order.length; loadTrack(order[pos], true); }
 nextBtn.addEventListener('click', goNext);
 prevBtn.addEventListener('click', goPrev);
 stopBtn.addEventListener('click', () => { audioEl.pause(); audioEl.currentTime = 0; });
 audioEl.addEventListener('ended', goNext);
 
 /* ---------- Playback error recovery ----------
-   Real-world failure mode observed: the stream can go silently frozen
-   mid-buffer — audioEl.paused stays false, no 'error' or 'stalled' event
-   fires, but currentTime just stops advancing. That's the one that was
-   slipping through before. This watchdog checks actual progress directly,
-   on a fixed interval, regardless of which (if any) event fired. */
+   Now mainly a safety net for the rare local decode hang, since network
+   stalls mid-song shouldn't happen anymore once a track is fully downloaded
+   before it starts playing. */
 let loadRetries = 0;
 let lastProgressTime = -1;
-let lastProgressCheckedAt = 0;
 let stuckSince = 0;
-
-function loadCurrentTrackSrc() {
-  const t = queueTracks[order[pos]];
-  if (!t) return;
-  audioEl.src = `https://www.googleapis.com/drive/v3/files/${t.id}?alt=media&key=${API_KEY}`;
-  audioEl.load();
-  audioEl.play().catch(() => {});
-}
 
 function retryOrSkip(reason) {
   console.error('Playback recovery triggered:', reason);
@@ -643,7 +694,7 @@ function retryOrSkip(reason) {
   loadRetries++;
   if (loadRetries <= 2) {
     setStatus('Playback hiccup — retrying…', 'err');
-    loadCurrentTrackSrc();
+    loadTrack(order[pos], true);
   } else {
     setStatus('That track kept failing — skipping ahead.', 'err');
     loadRetries = 0;
@@ -661,7 +712,6 @@ setInterval(() => {
   const ct = audioEl.currentTime;
   if (ct !== lastProgressTime) {
     lastProgressTime = ct;
-    lastProgressCheckedAt = now;
     stuckSince = 0;
     return;
   }
