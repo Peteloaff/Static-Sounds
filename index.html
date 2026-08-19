@@ -142,10 +142,14 @@
 
   /* ---- library / playlists ---- */
   .folder-group{margin-bottom:14px;}
-  .folder-head{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 8px;margin-bottom:4px;border-bottom:1px solid var(--line);}
-  .folder-head .fname{font-family:'Inter',sans-serif;font-weight:700;font-size:12px;color:var(--text);}
+  .folder-head{display:flex;align-items:center;gap:8px;padding:2px 2px 8px;margin-bottom:4px;border-bottom:1px solid var(--line);}
+  .folder-head .fname{flex:1;min-width:0;font-family:'Inter',sans-serif;font-weight:700;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .folder-head .fcount{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);}
   .folder-head .remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px;}
+  .folder-collapse{background:var(--card-2);border:1px solid var(--line);width:20px;height:20px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);flex:none;padding:0;}
+  .folder-collapse svg{width:11px;height:11px;transition:transform .2s ease;}
+  .folder-group.collapsed .folder-collapse svg{transform:rotate(-90deg);}
+  .folder-group.collapsed .folder-tracks{display:none;}
   .track{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:10px;cursor:pointer;font-size:13px;}
   .track:hover{background:var(--card-2);}
   .track.active{background:color-mix(in srgb, var(--red) 14%, transparent);}
@@ -336,6 +340,7 @@ initTheme();
 /* ---------- Library ---------- */
 let folders = [];
 let selected = new Map();
+let folderCollapsed = new Set();
 function extractFolderId(raw) { raw = raw.trim(); const m = raw.match(/folders\/([a-zA-Z0-9_-]+)/); if (m) return m[1]; const m2 = raw.match(/[-\w]{25,}/); if (m2) return m2[0]; return raw; }
 function setStatus(msg, type) { statusMsg.textContent = msg || ''; statusMsg.className = 'status' + (type ? ' ' + type : ''); }
 function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
@@ -360,8 +365,24 @@ async function addFolder(rawInput) {
     if (folderInput.value.trim() === rawInput.trim()) folderInput.value = '';
     setStatus(`Loaded "${meta.name}" — ${tracks.length} track${tracks.length===1?'':'s'}.`, 'ok');
     renderLibrary();
+    if (folderId === DEFAULT_FOLDER_ID) await syncMasterPlaylist(tracks);
   } catch (err) { console.error('addFolder failed', err); setStatus("Couldn't load that folder — " + err.message, 'err'); }
   finally { addFolderBtn.disabled = false; }
+}
+
+/* A default "SR" playlist that always mirrors the main folder's current
+   tracks, so everyone who opens the app sees it right away — not something
+   they have to build themselves. Fixed id so it's created once and kept in
+   sync on every load rather than duplicated. */
+async function syncMasterPlaylist(tracks) {
+  try {
+    const playlists = (await store.get('ss_playlists')) || [];
+    const idx = playlists.findIndex(p => p.id === 'pl_master_sr');
+    const entry = { id: 'pl_master_sr', name: 'SR', tracks: tracks.map(t => ({ id: t.id, name: t.name })) };
+    if (idx > -1) playlists[idx] = entry; else playlists.unshift(entry);
+    await store.set('ss_playlists', playlists);
+    await renderPlaylists();
+  } catch (err) { console.error('syncMasterPlaylist failed', err); }
 }
 
 function renderLibrary() {
@@ -369,8 +390,15 @@ function renderLibrary() {
   libraryList.innerHTML = '';
   folders.forEach(folder => {
     const group = document.createElement('div'); group.className = 'folder-group';
-    group.innerHTML = `<div class="folder-head"><span class="fname">${escapeHtml(folder.name)}</span><span class="fcount">${folder.tracks.length} trk</span><button class="remove" data-folder="${folder.id}">remove</button></div>`;
-    const list = document.createElement('div');
+    const collapsed = folderCollapsed.has(folder.id);
+    group.innerHTML = `<div class="folder-head">
+        <button class="folder-collapse" data-folder="${folder.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></button>
+        <span class="fname">${escapeHtml(folder.name)}</span>
+        <span class="fcount">${folder.tracks.length} trk</span>
+        <button class="remove" data-folder="${folder.id}">remove</button>
+      </div>`;
+    if (collapsed) group.classList.add('collapsed');
+    const list = document.createElement('div'); list.className = 'folder-tracks';
     folder.tracks.forEach(t => {
       const row = document.createElement('div'); row.className = 'track'; row.dataset.id = t.id;
       row.innerHTML = `<input type="checkbox" ${selected.has(t.id) ? 'checked' : ''}><span class="track-name">${folder.tracks.indexOf(t) + 1}. ${escapeHtml(t.name)}</span><span class="track-eq"><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span></span>`;
@@ -380,6 +408,10 @@ function renderLibrary() {
     });
     group.appendChild(list);
     group.querySelector('.remove').addEventListener('click', () => { folders = folders.filter(f => f.id !== folder.id); renderLibrary(); });
+    group.querySelector('.folder-collapse').addEventListener('click', () => {
+      if (folderCollapsed.has(folder.id)) folderCollapsed.delete(folder.id); else folderCollapsed.add(folder.id);
+      renderLibrary();
+    });
     libraryList.appendChild(group);
   });
 }
