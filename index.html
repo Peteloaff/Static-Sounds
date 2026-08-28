@@ -390,6 +390,8 @@
    ========================================================================= */
 const API_KEY = 'AIzaSyDTD4v7TCNL8CzImICG3b_Wefiaz1Nw0aU';
 const DEFAULT_FOLDER_ID = '1AcBAI4uLHdb3HRcwyKzno60WhK57PhoJ';
+const LIVE_FILE_ID = '1Fr-O9HoJ1feGDG9LVHxHxru-VXJooDL1';
+const MCR_FOLDER_ID = '1MVPcrgK08_8IPfzGcXjJJ89-5FtsYXK_';
 /* ========================================================================= */
 
 const els = id => document.getElementById(id);
@@ -409,7 +411,11 @@ if (!API_KEY || API_KEY === 'YOUR_API_KEY') {
   configWarn.textContent = 'Setup needed: replace API_KEY at the top of the script.';
   libraryList.innerHTML = '<div class="empty">Add your API key to load the preloaded folder.</div>';
 } else {
-  window.addEventListener('DOMContentLoaded', () => addFolder(DEFAULT_FOLDER_ID));
+  window.addEventListener('DOMContentLoaded', () => {
+    addFolder(DEFAULT_FOLDER_ID);
+    syncSingleFilePlaylist(LIVE_FILE_ID, 'pl_live', 'LIVE');
+    syncFolderPlaylist(MCR_FOLDER_ID, 'pl_mcr', 'MCR');
+  });
 }
 
 /* ---------- Window shade toggles ---------- */
@@ -627,6 +633,62 @@ async function syncMasterPlaylist(tracks) {
     await store.set('ss_playlists', playlists);
     await renderPlaylists();
   } catch (err) { console.error('syncMasterPlaylist failed', err); }
+}
+
+/* A default single-file playlist (e.g. "LIVE"), same idea as the SR sync
+   above but for one specific file link rather than a whole folder. The
+   file must be shared "Anyone with the link" for this to work. */
+async function syncSingleFilePlaylist(fileId, playlistId, playlistName) {
+  try {
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name&key=${API_KEY}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `Drive returned ${res.status}`);
+    }
+    const meta = await res.json();
+    const track = { id: meta.id, name: (meta.name || 'Untitled').replace(/\.[^/.]+$/, '') };
+    const playlists = (await store.get('ss_playlists')) || [];
+    const idx = playlists.findIndex(p => p.id === playlistId);
+    const entry = { id: playlistId, name: playlistName, tracks: [track] };
+    if (idx > -1) playlists[idx] = entry; else playlists.push(entry);
+    await store.set('ss_playlists', playlists);
+    await renderPlaylists();
+  } catch (err) {
+    console.error('syncSingleFilePlaylist failed', err);
+    setStatus(`Couldn't load "${playlistName}" — ${err.message}`, 'err');
+  }
+}
+
+/* A default playlist built from an entire folder's contents (e.g. "MCR"),
+   without adding that folder as its own section in the Library — just the
+   playlist. Same "Anyone with the link" sharing requirement applies. */
+async function syncFolderPlaylist(folderId, playlistId, playlistName) {
+  try {
+    const q = encodeURIComponent(`'${folderId}' in parents and (mimeType contains 'audio/' or mimeType='video/mp4') and trashed=false`);
+    const fields = encodeURIComponent('files(id,name,mimeType)');
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=${fields}&pageSize=1000&key=${API_KEY}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `Drive returned ${res.status}`);
+    }
+    const data = await res.json();
+    const tracks = (data.files || [])
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric:true}))
+      .map(f => ({ id: f.id, name: f.name.replace(/\.[^/.]+$/, '') }));
+    if (!tracks.length) {
+      setStatus(`"${playlistName}" folder loaded, but no audio files were found in it.`, 'err');
+      return;
+    }
+    const playlists = (await store.get('ss_playlists')) || [];
+    const idx = playlists.findIndex(p => p.id === playlistId);
+    const entry = { id: playlistId, name: playlistName, tracks };
+    if (idx > -1) playlists[idx] = entry; else playlists.push(entry);
+    await store.set('ss_playlists', playlists);
+    await renderPlaylists();
+  } catch (err) {
+    console.error('syncFolderPlaylist failed', err);
+    setStatus(`Couldn't load "${playlistName}" — ${err.message}`, 'err');
+  }
 }
 
 function renderLibrary() {
