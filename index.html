@@ -664,6 +664,16 @@ async function syncSingleFilePlaylist(fileId, playlistId, playlistName) {
 /* A default playlist built from an entire folder's contents (e.g. "MCR"),
    without adding that folder as its own section in the Library — just the
    playlist. Same "Anyone with the link" sharing requirement applies. */
+/* Mirrors a synced playlist's tracks into the Library as its own
+   collapsible group (same dropdown + checkbox UI folders already have),
+   so individual songs from a playlist can be picked, not just the whole
+   playlist at once. */
+function upsertLibraryGroup(id, name, tracks) {
+  const idx = folders.findIndex(f => f.id === id);
+  const entry = { id, name, tracks };
+  if (idx > -1) folders[idx] = entry; else folders.push(entry);
+}
+
 async function syncFolderPlaylist(folderId, playlistId, playlistName) {
   try {
     const q = encodeURIComponent(`'${folderId}' in parents and (mimeType contains 'audio/' or mimeType='video/mp4') and trashed=false`);
@@ -686,6 +696,8 @@ async function syncFolderPlaylist(folderId, playlistId, playlistName) {
     const entry = { id: playlistId, name: playlistName, tracks };
     if (idx > -1) playlists[idx] = entry; else playlists.push(entry);
     await store.set('ss_playlists', playlists);
+    upsertLibraryGroup('lib_' + playlistId, playlistName, tracks);
+    renderLibrary();
     await renderPlaylists();
   } catch (err) {
     console.error('syncFolderPlaylist failed', err);
