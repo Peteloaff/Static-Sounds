@@ -390,8 +390,9 @@
    ========================================================================= */
 const API_KEY = 'AIzaSyDTD4v7TCNL8CzImICG3b_Wefiaz1Nw0aU';
 const DEFAULT_FOLDER_ID = '1AcBAI4uLHdb3HRcwyKzno60WhK57PhoJ';
-const LIVE_FILE_ID = '1Fr-O9HoJ1feGDG9LVHxHxru-VXJooDL1';
+const LIVE_FOLDER_ID = '1MahBltjFtalFNPqxbSazdfO7vYtqihZB';
 const MCR_FOLDER_ID = '1MVPcrgK08_8IPfzGcXjJJ89-5FtsYXK_';
+const PRETTY_FOLDER_ID = '13myDw9t1ugiquMo27bH-jbQKV6ehZhst';
 /* ========================================================================= */
 
 const els = id => document.getElementById(id);
@@ -413,8 +414,9 @@ if (!API_KEY || API_KEY === 'YOUR_API_KEY') {
 } else {
   window.addEventListener('DOMContentLoaded', () => {
     addFolder(DEFAULT_FOLDER_ID);
-    syncSingleFilePlaylist(LIVE_FILE_ID, 'pl_live', 'LIVE');
+    syncFolderPlaylist(LIVE_FOLDER_ID, 'pl_live', 'LIVE');
     syncFolderPlaylist(MCR_FOLDER_ID, 'pl_mcr', 'MCR');
+    syncFolderPlaylist(PRETTY_FOLDER_ID, 'pl_pretty', 'Pretty');
   });
 }
 
