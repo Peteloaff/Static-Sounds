@@ -683,12 +683,20 @@ function upsertLibraryGroup(id, name, tracks) {
   if (idx > -1) folders[idx] = entry; else folders.push(entry);
 }
 
+const HIDDEN_NAMES = ['1', '1side2', 'ii'];
+const isHiddenName = n => HIDDEN_NAMES.includes(String(n || '').toLowerCase().replace(/\.[^/.]+$/, '').replace(/[\s_-]+/g, ''));
 async function syncFolderPlaylist(folderId, playlistId, playlistName) {
   try {
     if (!playlistName) {
       const mr = await fetch(`https://www.googleapis.com/drive/v3/files/${folderId}?fields=name&key=${API_KEY}`);
       if (!mr.ok) { const e = await mr.json().catch(() => ({})); throw new Error(e?.error?.message || `Drive returned ${mr.status}`); }
       playlistName = (await mr.json()).name || 'Playlist';
+    }
+    if (isHiddenName(playlistName)) {
+      const pls0 = (await store.get('ss_playlists')) || [];
+      await store.set('ss_playlists', pls0.filter(p => p.id !== playlistId));
+      renderPlaylists();
+      return;
     }
     const q = encodeURIComponent(`'${folderId}' in parents and (mimeType contains 'audio/' or mimeType='video/mp4') and trashed=false`);
     const fields = encodeURIComponent('files(id,name,mimeType)');
@@ -699,6 +707,7 @@ async function syncFolderPlaylist(folderId, playlistId, playlistName) {
     }
     const data = await res.json();
     const tracks = (data.files || [])
+      .filter(f => !isHiddenName(f.name))
       .sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric:true}))
       .map(f => ({ id: f.id, name: f.name.replace(/\.[^/.]+$/, '') }));
     if (!tracks.length) {
