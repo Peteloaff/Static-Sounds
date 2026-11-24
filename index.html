@@ -390,9 +390,12 @@
    ========================================================================= */
 const API_KEY = 'AIzaSyDTD4v7TCNL8CzImICG3b_Wefiaz1Nw0aU';
 const DEFAULT_FOLDER_ID = '1AcBAI4uLHdb3HRcwyKzno60WhK57PhoJ';
-const LIVE_FOLDER_ID = '1MahBltjFtalFNPqxbSazdfO7vYtqihZB';
-const MCR_FOLDER_ID = '1MVPcrgK08_8IPfzGcXjJJ89-5FtsYXK_';
-const PRETTY_FOLDER_ID = '13myDw9t1ugiquMo27bH-jbQKV6ehZhst';
+const PLAYLIST_FOLDER_IDS = [
+  '12j3ATI5LlnqrS2rk7MUvpi78RdSLFhlA',
+  '1onKPdOlEkoXEvz2ig0qa5LlcGynJxFdp',
+  '12Hh5QQ4w8be_BJQNcnTxs3Ms3BWBLUWX',
+  '1uheHHHfZZ9g173rlpF2I_yFjGo7QqTG9'
+];
 /* ========================================================================= */
 
 const els = id => document.getElementById(id);
@@ -413,10 +416,8 @@ if (!API_KEY || API_KEY === 'YOUR_API_KEY') {
   libraryList.innerHTML = '<div class="empty">Add your API key to load the preloaded folder.</div>';
 } else {
   window.addEventListener('DOMContentLoaded', () => {
-    addFolder(DEFAULT_FOLDER_ID);
-    syncFolderPlaylist(LIVE_FOLDER_ID, 'pl_live', 'LIVE');
-    syncFolderPlaylist(MCR_FOLDER_ID, 'pl_mcr', 'MCR');
-    syncFolderPlaylist(PRETTY_FOLDER_ID, 'pl_pretty', 'Pretty');
+    removeRetiredPlaylists();
+    PLAYLIST_FOLDER_IDS.forEach(id => syncFolderPlaylist(id, 'pl_' + id, null));
   });
 }
 
@@ -593,6 +594,14 @@ refreshDownloadedIndex();
 let folders = [];
 let selected = new Map();
 let folderCollapsed = new Set();
+let folderSeen = new Set(); // groups start minimized the first time they appear
+async function removeRetiredPlaylists() {
+  try {
+    const pls = (await store.get('ss_playlists')) || [];
+    const kept = pls.filter(p => !['pl_mcr','pl_live','pl_pretty','pl_master_sr'].includes(p.id));
+    if (kept.length !== pls.length) { await store.set('ss_playlists', kept); renderPlaylists(); }
+  } catch (e) {}
+}
 function extractFolderId(raw) { raw = raw.trim(); const m = raw.match(/folders\/([a-zA-Z0-9_-]+)/); if (m) return m[1]; const m2 = raw.match(/[-\w]{25,}/); if (m2) return m2[0]; return raw; }
 function setStatus(msg, type) { statusMsg.textContent = msg || ''; statusMsg.className = 'status' + (type ? ' ' + type : ''); }
 function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
@@ -676,6 +685,11 @@ function upsertLibraryGroup(id, name, tracks) {
 
 async function syncFolderPlaylist(folderId, playlistId, playlistName) {
   try {
+    if (!playlistName) {
+      const mr = await fetch(`https://www.googleapis.com/drive/v3/files/${folderId}?fields=name&key=${API_KEY}`);
+      if (!mr.ok) { const e = await mr.json().catch(() => ({})); throw new Error(e?.error?.message || `Drive returned ${mr.status}`); }
+      playlistName = (await mr.json()).name || 'Playlist';
+    }
     const q = encodeURIComponent(`'${folderId}' in parents and (mimeType contains 'audio/' or mimeType='video/mp4') and trashed=false`);
     const fields = encodeURIComponent('files(id,name,mimeType)');
     const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=${fields}&pageSize=1000&key=${API_KEY}`);
@@ -710,6 +724,7 @@ function renderLibrary() {
   libraryList.innerHTML = '';
   folders.forEach(folder => {
     const group = document.createElement('div'); group.className = 'folder-group';
+    if (!folderSeen.has(folder.id)) { folderSeen.add(folder.id); folderCollapsed.add(folder.id); }
     const collapsed = folderCollapsed.has(folder.id);
     group.innerHTML = `<div class="folder-head">
         <button class="folder-collapse" data-folder="${folder.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></button>
