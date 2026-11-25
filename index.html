@@ -390,6 +390,8 @@
    ========================================================================= */
 const API_KEY = 'AIzaSyDTD4v7TCNL8CzImICG3b_Wefiaz1Nw0aU';
 const DEFAULT_FOLDER_ID = '1AcBAI4uLHdb3HRcwyKzno60WhK57PhoJ';
+const LIVE_FOLDER_ID = '1MahBltjFtalFNPqxbSazdfO7vYtqihZB';
+const PRETTY_FOLDER_ID = '13myDw9t1ugiquMo27bH-jbQKV6ehZhst';
 const PLAYLIST_FOLDER_IDS = [
   '12j3ATI5LlnqrS2rk7MUvpi78RdSLFhlA',
   '1onKPdOlEkoXEvz2ig0qa5LlcGynJxFdp',
@@ -417,6 +419,8 @@ if (!API_KEY || API_KEY === 'YOUR_API_KEY') {
 } else {
   window.addEventListener('DOMContentLoaded', () => {
     removeRetiredPlaylists();
+    syncFolderPlaylist(LIVE_FOLDER_ID, 'pl_live', 'LIVE');
+    syncFolderPlaylist(PRETTY_FOLDER_ID, 'pl_pretty', 'Pretty');
     PLAYLIST_FOLDER_IDS.forEach(id => syncFolderPlaylist(id, 'pl_' + id, null));
   });
 }
@@ -598,7 +602,7 @@ let folderSeen = new Set(); // groups start minimized the first time they appear
 async function removeRetiredPlaylists() {
   try {
     const pls = (await store.get('ss_playlists')) || [];
-    const kept = pls.filter(p => !['pl_mcr','pl_live','pl_pretty','pl_master_sr'].includes(p.id));
+    const kept = pls.filter(p => !['pl_mcr','pl_master_sr'].includes(p.id));
     if (kept.length !== pls.length) { await store.set('ss_playlists', kept); renderPlaylists(); }
   } catch (e) {}
 }
